@@ -8,7 +8,7 @@ class Box(PhysicsObject):
     def __init__(self, box: Rect):
         sprite = Surface((box.w, box.h))
         sprite.fill("red")
-        super().__init__(box, sprite)
+        super().__init__(box, sprite, stable_angles = [0, 90, 180, 270, 360])
 
 
 class Game(nygame.Game):
@@ -16,6 +16,7 @@ class Game(nygame.Game):
         super().__init__(size = (1280, 720), fps = 120, showfps = True)
         self.room = PhysicsRoom(1280, 720)
         self.box = Box(Rect(400, 100, 100, 100))
+        self.box.rotation = 20
 
         self.room.objects.append(self.box)
 
