@@ -1,13 +1,11 @@
 from decimal import Decimal
-from typing import Union
+from typing import List, Union
 
 from pygame import Rect, Surface
 import pygame.transform
 
 Numeric = Union[Decimal, int, float]
 GenericPoint2D = tuple[Numeric, Numeric]
-
-PX_PER_M = 100
 
 
 class Point2D:
@@ -31,8 +29,26 @@ class PhysicsObject:
         self.box = box
         self._sprite = sprite
 
-        self.velocity = Point2D(0, 0)
+        self._velocity = Point2D(0, 0)
         self.rotation = 0.0
+        self.weight = 1
+
+        self._on_floor = False
+
+    @property
+    def velocity(self):
+        return self._velocity
+
+    @velocity.setter
+    def velocity(self, value):
+        if isinstance(value, Point2D):
+            self._velocity = value
+        else:
+            self._velocity = Point2D(value[0], value[1])
+
+    @property
+    def center(self):
+        return self.box.center
 
     @property
     def sprite(self):
@@ -40,7 +56,10 @@ class PhysicsObject:
         return s
 
     def update(self):
-        pass
+        if self._on_floor:
+            self.velocity = (0, 0)
+        self.box.x += self.velocity.x
+        self.box.y += self.velocity.y
 
     def render_to(self, surface: Surface):
         surface.blit(self.sprite, self.box)
@@ -48,4 +67,25 @@ class PhysicsObject:
 
 class PhysicsRoom:
     def __init__(self, width: int, height: int):
-        pass
+        self.width = width
+        self.height = height
+        self.surface = Surface((width, height))
+
+        self.objects: List[PhysicsObject] = []
+
+        self.resolution = 5  # px/m
+        self.gravity = Decimal(9.8)
+
+    def update(self):
+        for obj in self.objects:
+            if obj.box.bottom >= self.height:
+                obj._on_floor = True
+            if obj._on_floor is False:
+                obj.velocity.y += self.gravity * self.resolution / 120
+        for obj in self.objects:
+            obj.update()
+
+    def render(self):
+        self.surface.fill("clear")
+        for obj in self.objects:
+            obj.render_to(self.surface)
